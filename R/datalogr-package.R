@@ -1,0 +1,5 @@
+#' datalogr
+#'
+#' @name datalogr
+#'
+NULL

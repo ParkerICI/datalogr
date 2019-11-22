@@ -1,0 +1,15 @@
+Package: datalogr
+Type: Package
+Title: Interacting with a Datomic database via R
+Version: 0.1.0
+Authors@R: as.person(c(
+    "Pier Federico Gherardini <pfgherardini@parkerici.org> [aut, cre]", 
+    "Lacey Kitch <lkitch@parkerici.org> [aut]"
+  ))
+Description: This package provides a DSL to write Datomic queries 
+  from R
+License: lgpl-3.0
+Imports: httr, jsonlite, stringr, rlang, dplyr, data.table
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
