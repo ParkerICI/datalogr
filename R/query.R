@@ -51,7 +51,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     if(print.json)
         message(query.json)
 
-    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw")
+    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw", async = TRUE)
 
     response.content <- httr::content(response, simplifyVector = TRUE)
 
