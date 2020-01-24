@@ -24,7 +24,8 @@ ensure_server_url <- function(server.url) {
 #' @param query The query as returned by \code{\link{query}}
 #' @param server.url Optional. The server URL against which the
 #'   query is run. This can be set globally using \code{\link{set_server_url}}
-#' @param timeout Optional. The query timeout in milliseconds
+#' @param query.timeout Optional. The query timeout in milliseconds
+#' @param datalogr.timeout Optional. Time for datalogr to wait for query to finish in milliseconds
 #' @param print.json If set to \code{TRUE}, prints the JSON version of the query
 #'   that is sent to the server (useful for debugging purposes)
 #' @param ... Additional arguments passed to either \code{\link{convert_query_results}}
@@ -33,14 +34,18 @@ ensure_server_url <- function(server.url) {
 #'   case the column names are taken from the symbols that appear in the \code{find}
 #'   portion of the query
 #' @export
-do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, ...) {
+do_query <- function(query, server.url = NULL, query.timeout = NULL, datalogr.timeout = NULL, print.json = FALSE, ...) {
     server.url <- ensure_server_url(server.url)
     qq <- query
     if(is.null(qq$query$"in"))
         qq$query$"in" <- list("$")
     else
         qq$query$"in" <- c("$", qq$query$"in")
-    qq$timeout <- timeout
+    if(!is.null(query.timeout)){
+        qq$timeout <- query.timeout
+        qq$async <- TRUE
+    }
+    qq$optimize <- TRUE
 
     pull.query <- any(grepl("pull", unlist(query$query$find)))
 
@@ -51,7 +56,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     if(print.json)
         message(query.json)
 
-    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw", async = TRUE)
+    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw")
 
     response.content <- httr::content(response, simplifyVector = TRUE)
 
@@ -62,7 +67,24 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
         res.data.content <- NULL
 
         if (is.character(response.content) && substr(response.content, 1, 8) == 'https://') {
-            res.data <- httr::RETRY("GET", url = response.content)
+            if(is.null(datalogr.timeout)){
+                res.data <- httr::RETRY("GET", url = response.content)
+            } else {
+                # The s3 link to results will return a 403 if the query is not completed yet.
+                res.code <- 403
+                datalogr.timeout.seconds <- datalogr.timeout %/% 1000
+                R.utils::withTimeout(
+                    while(res.code == 403){
+                        res.data <- httr::GET(response.content)
+                        res.code <- httr::status_code(res.data)
+                        if(res.code == 403){
+                            Sys.sleep(time = 5)
+                            message("Query not completed. Trying again.")
+                        }
+                    }, timeout = datalogr.timeout.seconds, onTimeout = "warning"
+                )
+            }
+
             res.data.content <- httr::content(res.data, simplifyVector = TRUE)
 
             if(httr::status_code(res.data) != 200) {

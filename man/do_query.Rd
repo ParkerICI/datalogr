@@ -4,8 +4,8 @@
 \alias{do_query}
 \title{Runs a query agains the database}
 \usage{
-do_query(query, server.url = NULL, timeout = NULL,
-  print.json = FALSE, ...)
+do_query(query, server.url = NULL, query.timeout = NULL,
+  datalogr.timeout = NULL, print.json = FALSE, ...)
 }
 \arguments{
 \item{query}{The query as returned by \code{\link{query}}}
@@ -13,7 +13,9 @@ do_query(query, server.url = NULL, timeout = NULL,
 \item{server.url}{Optional. The server URL against which the
 query is run. This can be set globally using \code{\link{set_server_url}}}
 
-\item{timeout}{Optional. The query timeout in milliseconds}
+\item{query.timeout}{Optional. The query timeout in milliseconds}
+
+\item{datalogr.timeout}{Optional. Time for datalogr to wait for query to finish in milliseconds}
 
 \item{print.json}{If set to \code{TRUE}, prints the JSON version of the query
 that is sent to the server (useful for debugging purposes)}
