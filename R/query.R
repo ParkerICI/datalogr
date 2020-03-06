@@ -41,6 +41,8 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     else
         qq$query$"in" <- c("$", qq$query$"in")
     qq$timeout <- timeout
+    qq$async <- TRUE
+    qq$optimize <- TRUE
 
     pull.query <- any(grepl("pull", unlist(query$query$find)))
 
@@ -55,14 +57,13 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
 
     response.content <- httr::content(response, simplifyVector = TRUE)
 
-
     ret <- NULL
 
     if (httr::status_code(response) == 200) {
         res.data.content <- NULL
 
         if (is.character(response.content) && substr(response.content, 1, 8) == 'https://') {
-            res.data <- httr::RETRY("GET", url = response.content)
+            res.data <- httr::RETRY("GET", url = response.content, times = 1000, quiet = T)
             res.data.content <- httr::content(res.data, simplifyVector = TRUE)
 
             if(httr::status_code(res.data) != 200) {
@@ -74,6 +75,9 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
         }
         else
             res.data.content <- response.content
+
+        if(!is.null(res.data.content$error))
+            stop(sprintf("Error %s", res.data.content$error$message))
 
         if (pull.query)
             ret <- convert_pull_query_results(res.data.content$query_result, ...)
