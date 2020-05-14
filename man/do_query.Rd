@@ -5,7 +5,7 @@
 \title{Runs a query agains the database}
 \usage{
 do_query(query, server.url = NULL, timeout = NULL,
-  print.json = FALSE, ...)
+  print.json = FALSE, auth.token = NULL, ...)
 }
 \arguments{
 \item{query}{The query as returned by \code{\link{query}}}
@@ -17,6 +17,8 @@ query is run. This can be set globally using \code{\link{set_server_url}}}
 
 \item{print.json}{If set to \code{TRUE}, prints the JSON version of the query
 that is sent to the server (useful for debugging purposes)}
+
+\item{auth.token}{Optional string. The authuorization token to be used for this query}
 
 \item{...}{Additional arguments passed to either \code{\link{convert_query_results}}
 or either \code{\link{convert_pull_query_results}}}
