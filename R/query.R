@@ -27,13 +27,14 @@ ensure_server_url <- function(server.url) {
 #' @param timeout Optional. The query timeout in milliseconds
 #' @param print.json If set to \code{TRUE}, prints the JSON version of the query
 #'   that is sent to the server (useful for debugging purposes)
+#' @param auth.token Optional string. The authorization token to be used for this query
 #' @param ... Additional arguments passed to either \code{\link{convert_query_results}}
 #'   or either \code{\link{convert_pull_query_results}}
 #' @return Returns a \code{data.frame} or vector with the query results. In the former
 #'   case the column names are taken from the symbols that appear in the \code{find}
 #'   portion of the query
 #' @export
-do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, ...) {
+do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, ...) {
     server.url <- ensure_server_url(server.url)
     qq <- query
     if(is.null(qq$query$"in"))
@@ -53,7 +54,8 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     if(print.json)
         message(query.json)
 
-    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw")
+    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw",
+                            httr::add_headers(Authorization = paste("Token", auth.token)))
 
     response.content <- httr::content(response, simplifyVector = TRUE)
 
@@ -84,6 +86,8 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
         else
             ret <- convert_query_results(query, res.data.content$query_result, ...)
 
+    } else if (httr::status_code(response) == 401) {
+        stop("Not authorized. Either you didn't provide an authorization token, or your token has expired")
     } else {
         if(!is.null(response$message))
             stop(response$message)
