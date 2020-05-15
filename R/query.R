@@ -27,7 +27,7 @@ ensure_server_url <- function(server.url) {
 #' @param timeout Optional. The query timeout in milliseconds
 #' @param print.json If set to \code{TRUE}, prints the JSON version of the query
 #'   that is sent to the server (useful for debugging purposes)
-#' @param auth.token Optional string. The authuorization token to be used for this query
+#' @param auth.token Optional string. The authorization token to be used for this query
 #' @param ... Additional arguments passed to either \code{\link{convert_query_results}}
 #'   or either \code{\link{convert_pull_query_results}}
 #' @return Returns a \code{data.frame} or vector with the query results. In the former
@@ -83,8 +83,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
             ret <- convert_query_results(query, res.data.content$query_result, ...)
 
     } else if (httr::status_code(response) == 401) {
-        stop(paste("Not authorized. If you have already login using wick::login, your authorization token may be expired.",
-                   "Please pass force = TRUE to wick::login to refresh your authorization token"))
+        stop("Not authorized. Either you didn't provide an authorization token, or your token has expired")
     } else {
         if(!is.null(response$message))
             stop(response$message)
