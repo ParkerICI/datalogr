@@ -34,7 +34,7 @@ ensure_server_url <- function(server.url) {
 #'   case the column names are taken from the symbols that appear in the \code{find}
 #'   portion of the query
 #' @export
-do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, ...) {
+do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, verbose = FALSE, ...) {
     server.url <- ensure_server_url(server.url)
     qq <- query
     if(is.null(qq$query$"in"))
@@ -42,7 +42,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     else
         qq$query$"in" <- c("$", qq$query$"in")
     qq$timeout <- timeout
-    qq$async <- TRUE
+    qq$async <- TRUE # To support old API, remove eventually
     qq$optimize <- TRUE
 
     pull.query <- any(grepl("pull", unlist(query$query$find)))
@@ -54,38 +54,58 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     if(print.json)
         message(query.json)
 
-    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw",
-                            httr::add_headers(Authorization = paste("Token", auth.token)))
+    headers <- httr::add_headers(Authorization = paste("Token", auth.token))
+    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw", config = headers)
 
     response.content <- httr::content(response, simplifyVector = TRUE)
 
     ret <- NULL
 
     if (httr::status_code(response) == 200) {
-        res.data.content <- NULL
+        res.data <- res.data.content <- NULL
 
-        if (is.character(response.content) && substr(response.content, 1, 8) == 'https://') {
-            res.data <- httr::RETRY("GET", url = response.content, times = 1000, quiet = T)
-            res.data.content <- httr::content(res.data, simplifyVector = TRUE)
-
-            if(httr::status_code(res.data) != 200) {
-                if(!is.null(res.data$message))
-                    stop(res.data$message)
-                else
-                    stop(res.data.content)
+        if(!is.null(response.content$"query-id")) {
+            query.id <- response.content$"query-id"
+            server.base.url <- gsub("/query/.*", "", server.url)
+            while(is.null(res.data)) {
+                x <- httr::GET(url = paste(server.base.url, "query-status", query.id, sep = "/"), config = headers)
+                if(httr::status_code(x) == 200) {
+                    x <- httr::content(x, simplifyVector = TRUE)
+                    if(x$status %in% c("fail-query", "fail-malformed-query", "fail-error", "fail-memory"))
+                        stop(sprintf("Query failed with status:%s\nerror message:%s", query.status, x$"error-message"))
+                    else if(x$status %in% c("success", "success-cached")) {
+                        res.data <- httr::RETRY("GET", url = x$"results-url", times = 1000, quiet = T)
+                        res.data.content <- httr::content(res.data, simplifyVector = TRUE)
+                    }
+                } else {
+                    warning(sprintf("Failed to retrieve query status for query-id:%s", query.id))
+                }
+                Sys.sleep(1)
             }
+
+        } else { # Support for old query server, remove eventually
+            if (is.character(response.content) && substr(response.content, 1, 8) == 'https://') {
+                res.data <- httr::RETRY("GET", url = response.content, times = 1000, quiet = T)
+                res.data.content <- httr::content(res.data, simplifyVector = TRUE)
+
+                if(httr::status_code(res.data) != 200) {
+                    if(!is.null(res.data$message))
+                        stop(res.data$message)
+                    else
+                        stop(res.data.content)
+                }
+            }
+            else
+                res.data.content <- response.content
+            if(!is.null(res.data.content$error))
+                stop(sprintf("Error %s", res.data.content$error$message))
+            res.data.content <- res.data.content$query_result
+
         }
-        else
-            res.data.content <- response.content
-
-        if(!is.null(res.data.content$error))
-            stop(sprintf("Error %s", res.data.content$error$message))
-
         if (pull.query)
-            ret <- convert_pull_query_results(res.data.content$query_result, ...)
+            ret <- convert_pull_query_results(res.data.content, ...)
         else
-            ret <- convert_query_results(query, res.data.content$query_result, ...)
-
+            ret <- convert_query_results(query, res.data.content, ...)
     } else if (httr::status_code(response) == 401) {
         stop("Not authorized. Either you didn't provide an authorization token, or your token has expired")
     } else {

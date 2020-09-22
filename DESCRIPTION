@@ -12,4 +12,4 @@ License: lgpl-3.0
 Imports: httr, jsonlite, stringr, rlang, dplyr, data.table
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.0
+RoxygenNote: 7.1.1

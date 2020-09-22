@@ -4,8 +4,7 @@
 \alias{convert_pull_query_results}
 \title{Converts the results of a pull expression query}
 \usage{
-convert_pull_query_results(query.res, flatten = TRUE,
-  exclude.db.ids = TRUE)
+convert_pull_query_results(query.res, flatten = TRUE, exclude.db.ids = TRUE)
 }
 \arguments{
 \item{query.res}{A \code{list} of \code{data.frames}. The results of the query}
