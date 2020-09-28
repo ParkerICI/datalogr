@@ -1,7 +1,7 @@
 Package: datalogr
 Type: Package
 Title: Interacting with a Datomic database via R
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: as.person(c(
     "Pier Federico Gherardini <pfgherardini@parkerici.org> [aut, cre]", 
     "Lacey Kitch <lkitch@parkerici.org> [aut]"
