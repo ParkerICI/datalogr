@@ -64,7 +64,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     if (httr::status_code(response) == 200) {
         res.data <- res.data.content <- NULL
 
-        if(!is.null(response.content$"query-id")) {
+        if(is.list(response.content) && !is.null(response.content$"query-id")) {
             query.id <- response.content$"query-id"
             server.base.url <- gsub("/query/.*", "", server.url)
             while(is.null(res.data)) {
