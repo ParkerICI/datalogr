@@ -4,8 +4,15 @@
 \alias{do_query}
 \title{Runs a query agains the database}
 \usage{
-do_query(query, server.url = NULL, timeout = NULL,
-  print.json = FALSE, auth.token = NULL, ...)
+do_query(
+  query,
+  server.url = NULL,
+  timeout = NULL,
+  print.json = FALSE,
+  auth.token = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{query}{The query as returned by \code{\link{query}}}
