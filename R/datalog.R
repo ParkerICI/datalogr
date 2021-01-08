@@ -1,6 +1,6 @@
 #' Process R expressions starting with "?"
 #'
-#' This function converts R expressions starting with \code{?}. Such expressions
+#' This function converts R expressions containing variables starting with \code{?}. Such expressions
 #' look like symbol names but are actually converted to function calls
 #' when parsed by the R interpreter
 #'
@@ -10,13 +10,16 @@
 #'
 process_question_mark <- function(s) {
     ret <- gsub("`", "", s)
-    if(length(grep("?", ret)) > 0) {
+    if(length(grep("?", ret, fixed = TRUE)) > 0) {
         regex <- "\\?\\(([^\\(\\)]*)\\)"
 
-        m <- stringr::str_match(ret, regex)
-        s <- sprintf("?%s", m[1, 2])
+        m <- stringr::str_extract_all(ret, regex)
+        s <- sapply(m[[1]], function(x){
+            sprintf("?%s", stringr::str_match(x,regex)[,2])})
         s <- gsub(" - ", "-", s)
-        ret <- stringr::str_replace(ret, regex, s)
+        # Fix named vector names to be regex safe:
+        names(s) <- sapply(names(s), function(x){stringr::str_replace_all(x, "(\\W)", "\\\\\\1")})
+        ret <- stringr::str_replace_all(ret, s)
 
     }
     ret <- trimws(ret)
@@ -44,6 +47,13 @@ parse_expression <- function(s) {
             ret <- list(op, v[[1]], v[[2]])
         }
 
+        #Vector: processing vectors written as c(?a, ?b) to list(?a, ?b)
+        if(startsWith(ret, "c(")){
+            m <- gsub(" ", "", ret)
+            m <- stringr::str_match(m, "c(.*)\\((.*)\\)")
+            ret <- as.list(strsplit(m[3], ",")[[1]])
+
+        }
 
         #Function call
         if(length(grep("(.*)\\((.*)\\)", ret)) > 0) {

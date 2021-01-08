@@ -72,7 +72,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
                 if(httr::status_code(x) == 200) {
                     x <- httr::content(x, simplifyVector = TRUE)
                     if(x$status %in% c("fail-query", "fail-malformed-query", "fail-error", "fail-memory"))
-                        stop(sprintf("Query failed with status:%s\nerror message:%s", query.status, x$"error-message"))
+                        stop(sprintf("Query failed with status:%s", x$status))
                     else if(x$status %in% c("success", "success-cached")) {
                         res.data <- httr::RETRY("GET", url = x$"results-url", times = 1000, quiet = T)
                         res.data.content <- httr::content(res.data, simplifyVector = TRUE)
