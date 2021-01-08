@@ -10,7 +10,7 @@
 #'
 process_question_mark <- function(s) {
     ret <- gsub("`", "", s)
-    if(length(grep("?", ret, fixed = TRUE)) > 0) {
+    if(length(grep("\\?", ret)) > 0) {
         regex <- "\\?\\(([^\\(\\)]*)\\)"
 
         m <- stringr::str_extract_all(ret, regex)
