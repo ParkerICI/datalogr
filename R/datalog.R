@@ -259,6 +259,37 @@ or <- function(...) {
 
 }
 
+
+#' Generate multiple or clauses for several alternatives
+#'
+#' This function generates multiple \code{or} clauses by combining a partial clause with multiple
+#' alternatives. For instance given the alternatives \code{c("A", "B")} and the partial clause
+#' \code{?p, epitope/name} this function generates the or clause
+#' \code{
+#'   or(
+#'     d(?p, epitope/name, "A"),
+#'     d(?p, epitope/name, "B")
+#'   )
+#' }
+#'
+#' @param alternatives A character vector of alternatives
+#' @param ... The partial clause
+#'
+#' @examples
+#'
+#' generate_or(
+#'   alternatives = c("A", "B"), ?p, epitope/name
+#' )
+#'
+#' @return Returns an \code{or} expression suitable for inclusion in a query
+#' @export
+generate_or <- function(alternatives, ...) {
+    ret <- lapply(alternatives, function(x) {d(..., !!x)})
+    ret <- do.call(list, c("or", ret))
+    return(ret)
+}
+
+
 #' Construct not clauses
 #'
 #' @inherit or

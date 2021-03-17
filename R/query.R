@@ -28,13 +28,15 @@ ensure_server_url <- function(server.url) {
 #' @param print.json If set to \code{TRUE}, prints the JSON version of the query
 #'   that is sent to the server (useful for debugging purposes)
 #' @param auth.token Optional string. The authorization token to be used for this query
+#' @param verbose Optional, currently unused
+#' @param optimize Whether to use the server-side query optimizer
 #' @param ... Additional arguments passed to either \code{\link{convert_query_results}}
 #'   or either \code{\link{convert_pull_query_results}}
 #' @return Returns a \code{data.frame} or vector with the query results. In the former
 #'   case the column names are taken from the symbols that appear in the \code{find}
 #'   portion of the query
 #' @export
-do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, verbose = FALSE, ...) {
+do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, verbose = FALSE, optimize = TRUE, ...) {
     server.url <- ensure_server_url(server.url)
     qq <- query
     if(is.null(qq$query$"in"))
@@ -43,7 +45,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
         qq$query$"in" <- c("$", qq$query$"in")
     qq$timeout <- timeout
     qq$async <- TRUE # To support old API, remove eventually
-    qq$optimize <- TRUE
+    qq$optimize <- optimize
 
     pull.query <- any(grepl("pull", unlist(query$query$find)))
 
@@ -69,10 +71,12 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
             server.base.url <- gsub("/query/.*", "", server.url)
             while(is.null(res.data)) {
                 x <- httr::GET(url = paste(server.base.url, "query-status", query.id, sep = "/"), config = headers)
+
                 if(httr::status_code(x) == 200) {
                     x <- httr::content(x, simplifyVector = TRUE)
-                    if(x$status %in% c("fail-query", "fail-malformed-query", "fail-error", "fail-memory"))
-                        stop(sprintf("Query failed with status:%s", x$status))
+                    if(x$status %in% c("fail-query", "fail-malformed-query", "fail-error", "fail-memory")) {
+                        stop(sprintf("Query failed with status:%s\nerror message:%s", query$status, x$"error-message"))
+                    }
                     else if(x$status %in% c("success", "success-cached")) {
                         res.data <- httr::RETRY("GET", url = x$"results-url", times = 1000, quiet = T)
                         res.data.content <- httr::content(res.data, simplifyVector = TRUE)
@@ -102,6 +106,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
             res.data.content <- res.data.content$query_result
 
         }
+
         if (pull.query)
             ret <- convert_pull_query_results(res.data.content, ...)
         else

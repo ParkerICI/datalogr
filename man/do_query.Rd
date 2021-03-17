@@ -11,6 +11,7 @@ do_query(
   print.json = FALSE,
   auth.token = NULL,
   verbose = FALSE,
+  optimize = TRUE,
   ...
 )
 }
@@ -26,6 +27,10 @@ query is run. This can be set globally using \code{\link{set_server_url}}}
 that is sent to the server (useful for debugging purposes)}
 
 \item{auth.token}{Optional string. The authorization token to be used for this query}
+
+\item{verbose}{Optional, currently unused}
+
+\item{optimize}{Whether to use the server-side query optimizer}
 
 \item{...}{Additional arguments passed to either \code{\link{convert_query_results}}
 or either \code{\link{convert_pull_query_results}}}
