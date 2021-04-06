@@ -47,7 +47,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     qq$async <- TRUE # To support old API, remove eventually
     qq$optimize <- optimize
 
-    pull.query <- any(grepl("pull", unlist(query$query$find)))
+    pull.query <- is_pull_query(query)
 
     names(qq$query) <- paste(":", names(qq$query), sep = "")
 
@@ -124,7 +124,17 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
 }
 
 
-
+#' Checks whether a query contains a pull expression
+#'
+#' @param query
+#' @return Returns a boolean indicating whether this query contains a pull expression
+#'   or not
+#'
+#' @export
+#'
+is_pull_query <- function(query) {
+    any(grepl("pull", unlist(query$query$find)))
+}
 
 #' Globally set the server URL
 #'
