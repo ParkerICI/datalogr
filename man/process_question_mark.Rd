@@ -13,7 +13,7 @@ process_question_mark(s)
 Returns the converted string
 }
 \description{
-This function converts R expressions starting with \code{?}. Such expressions
+This function converts R expressions containing variables starting with \code{?}. Such expressions
 look like symbol names but are actually converted to function calls
 when parsed by the R interpreter
 }
