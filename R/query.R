@@ -36,7 +36,7 @@ ensure_server_url <- function(server.url) {
 #'   case the column names are taken from the symbols that appear in the \code{find}
 #'   portion of the query
 #' @export
-do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, verbose = FALSE, optimize = TRUE, ...) {
+do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALSE, auth.token = NULL, verbose = FALSE, optimize = TRUE, skip.cache = FALSE, ...) {
     server.url <- ensure_server_url(server.url)
     qq <- query
     if(is.null(qq$query$"in"))
@@ -46,6 +46,7 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
     qq$timeout <- timeout
     qq$async <- TRUE # To support old API, remove eventually
     qq$optimize <- optimize
+    qq$"skip-cache" <- skip.cache
 
     pull.query <- is_pull_query(query)
 
