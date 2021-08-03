@@ -57,7 +57,12 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
         message(query.json)
 
     headers <- httr::add_headers(Authorization = paste("Token", auth.token))
-    response <- httr::RETRY("POST", url = server.url, body = query.json, encode = "raw", config = headers)
+    response <- httr::RETRY("POST",
+                            url = server.url,
+                            body = query.json,
+                            encode = "raw",
+                            config = headers,
+                            pause_base = 1)
 
     response.content <- httr::content(response, simplifyVector = TRUE)
 
@@ -75,7 +80,12 @@ do_query <- function(query, server.url = NULL, timeout = NULL, print.json = FALS
                 if(httr::status_code(x) == 200) {
                     x <- httr::content(x, simplifyVector = TRUE)
                     if(x$status %in% c("fail-query", "fail-malformed-query", "fail-error", "fail-memory")) {
-                        stop(sprintf("Query failed with status:%s\nerror message:%s", query$status, x$"error-message"))
+                        if ("error-message" %in% names(x)) {
+                            candel.error <- x$"error-message"
+                        } else {
+                            candel.error <- "Server error message was empty!"
+                        }
+                        stop(sprintf("Query failed with status: %s\nerror message: %s", x$status, candel.error))
                     }
                     else if(x$status %in% c("success", "success-cached")) {
                         res.data <- httr::RETRY("GET", url = x$"results-url", times = 1000, quiet = T)
