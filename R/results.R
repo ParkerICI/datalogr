@@ -58,7 +58,7 @@ convert_pull_query_results <- function(query.res, flatten = TRUE,
         # attribute will have NA, while the other entities will have whatever attributes are included
         # from the map specification. Therefore when the data.frames are combined with dplyr::bind_rows
         # this will generate a column with all NAs, which can be removed
-        res <- res[, !sapply(res, function(x) {all(is.na(x))})]
+        res <- res[, !sapply(res, function(x) {all(is.na(x))}), drop = FALSE]
     }
     return(res)
 
